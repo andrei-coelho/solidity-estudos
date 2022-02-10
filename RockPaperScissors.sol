@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >= 0.4.19;
+pragma solidity >= 0.8.0;
 
 contract RockPaperScissors {
   
   event GameCreated(address creator, uint gameNumber, uint bet);
-  event GameStarted(address[] players, uint gameNumber);
+  event GameStarted(address[2] players, uint gameNumber);
   event GameComplete(address winner, uint gameNumber);
 
   uint gameNumberVar = 0;
+  address owner;
+
+  constructor(){
+      owner = msg.sender; 
+  }
 
   struct Game {
       
@@ -22,6 +27,7 @@ contract RockPaperScissors {
       uint16  movementP;
 
       bool    finish;
+      bool    started;
       
   }
 
@@ -32,9 +38,11 @@ contract RockPaperScissors {
     require(msg.value > 0);
     
     gameNumberVar++;
-    Game memory game = Game(msg.sender, participant, address(0), msg.value, 0, 0, 0, false);
+    Game memory game = Game(msg.sender, participant, address(0), msg.value, 0, 0, 0, false, false);
     games[gameNumberVar] = game;
     
+    payable(owner).transfer(msg.value);
+
     emit GameCreated(msg.sender, gameNumberVar, msg.value);
   
   }
@@ -44,6 +52,7 @@ contract RockPaperScissors {
       require(gameNumber <= gameNumberVar);
       
       Game storage game = games[gameNumber];
+      require(!game.started);
       require(game.participant == msg.sender);
       require(game.betCreator <= msg.value);
       
@@ -56,10 +65,9 @@ contract RockPaperScissors {
       }
 
       game.betParicipant = val;
-
-      address[] memory players; // problema está aqui tentar resolver amanhã
-      players[0] = game.creator; 
-      players[1] = game.participant;
+      payable(owner).transfer(val);
+      game.started = true;
+      address[2] memory players = [game.creator, game.participant];
 
       emit GameStarted(players, gameNumber);
 
@@ -100,6 +108,9 @@ contract RockPaperScissors {
             }
         }
         
+        address win = game.winner;
+        emit GameComplete(win, gameNumber);
+
         winner(gameNumber);
 
     }
