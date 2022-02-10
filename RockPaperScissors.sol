@@ -108,8 +108,7 @@ contract RockPaperScissors {
             }
         }
         
-        address win = game.winner;
-        emit GameComplete(win, gameNumber);
+        emit GameComplete(game.winner, gameNumber);
 
         winner(gameNumber);
 
